@@ -16,7 +16,7 @@ class Context(Tag):
     def __init__(self, value):
         super().__init__(value, self.name)
 
-class Propersition(Tag):
+class Proposition(Tag):
     name = 'proposition'
     def __new__(cls, value, context=''):
         return super().__new__(cls, value, cls.name)
@@ -26,44 +26,44 @@ class Propersition(Tag):
         self.context = context
 
     def __invert__(p):
-        return Propersition(f'{Propersition(p.value)}\nis false.\n', p.context)
+        return Proposition(f'{Proposition(p.value)}\nis false.\n', p.context)
 
     def __and__(p, q):
         if p.context.value == q.context.value:
             context = p.context
-            p, q = Propersition(p.value), Propersition(q.value)
-            return Propersition(f'{p}\nand\n{q}\nare both true.\n', context)
+            p, q = Proposition(p.value), Proposition(q.value)
+            return Proposition(f'{p}\nand\n{q}\nare both true.\n', context)
         else:
-            return Propersition(f'{p}\nand\n{q}\nare both true.\n')
+            return Proposition(f'{p}\nand\n{q}\nare both true.\n')
 
     def __or__(p, q):
         if p.context.value == q.context.value:
             context = p.context
-            p, q = Propersition(p.value), Propersition(q.value)
-            return Propersition(f'At least one of\n{p}\nand\n{q}\nis true.\n', context)
+            p, q = Proposition(p.value), Proposition(q.value)
+            return Proposition(f'At least one of\n{p}\nand\n{q}\nis true.\n', context)
         else:
-            return Propersition(f'At least one of\n{p}\nand\n{q}\nis true.\n')
+            return Proposition(f'At least one of\n{p}\nand\n{q}\nis true.\n')
     def __eq__(p, q):
         if p.context.value == q.context.value:
             context = p.context
-            p, q = Propersition(p.value), Propersition(q.value)
-            return Propersition(f'{p}\nis true, if and only if\n{q}\nis true.\n', context)
+            p, q = Proposition(p.value), Proposition(q.value)
+            return Proposition(f'{p}\nis true, if and only if\n{q}\nis true.\n', context)
         else:
-            return Propersition(f'{p}\nis true, if and only if\n{q}\nis true.\n')
+            return Proposition(f'{p}\nis true, if and only if\n{q}\nis true.\n')
     def __lshift__(p, q):
         if p.context.value == q.context.value:
             context = p.context
-            p, q = Propersition(p.value), Propersition(q.value)
-            return Propersition(f'{p}\nis true, if\n{q}\nis true.\n', context)
+            p, q = Proposition(p.value), Proposition(q.value)
+            return Proposition(f'{p}\nis true, if\n{q}\nis true.\n', context)
         else:
-            return Propersition(f'{p}\nis true, if\n{q}\nis true.\n')
+            return Proposition(f'{p}\nis true, if\n{q}\nis true.\n')
 
     def __rshift__(p, q):
         if p.context.value == q.context.value:
             context = p.context
-            p, q = Propersition(p.value), Propersition(q.value)
-            return Propersition(f'{p}\nis true, only if\n{q}\nis true.\n', context)
+            p, q = Proposition(p.value), Proposition(q.value)
+            return Proposition(f'{p}\nis true, only if\n{q}\nis true.\n', context)
         else:
-            return Propersition(f'{p}\nis true, only if\n{q}\nis true.\n')
+            return Proposition(f'{p}\nis true, only if\n{q}\nis true.\n')
         
 
