@@ -22,16 +22,12 @@ class Context(Tag):
 class Proposition(Tag):
     name = 'proposition'
     def __new__(cls, value, context=''):
-        ctx =  Context(context).value
+        ctx =  Context(context)
         lines = ctx.splitlines()
         indent = '    '
         context = '\n'.join([f"{indent}{line}" for line in lines])
 
-        return super().__new__(cls, f'''<context>
-{context}
-</context>
-{value}
-''', cls.name)
+        return super().__new__(cls, f'{context}\n{value}', cls.name)
 
     def __init__(self, value, context=''):
         super().__init__(value, self.name)
