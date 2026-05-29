@@ -1,3 +1,6 @@
+from os import name
+
+
 class Tag(str):
     def __new__(cls, value, name):
         lines = value.splitlines()
@@ -19,11 +22,20 @@ class Context(Tag):
 class Proposition(Tag):
     name = 'proposition'
     def __new__(cls, value, context=''):
-        return super().__new__(cls, value, cls.name)
+        ctx =  Context(context).value
+        lines = ctx.splitlines()
+        indent = '    '
+        context = '\n'.join([f"{indent}{line}" for line in lines])
+
+        return super().__new__(cls, f'''<context>
+{context}
+</context>
+{value}
+''', cls.name)
 
     def __init__(self, value, context=''):
         super().__init__(value, self.name)
-        self.context = context
+        self.context = Context(context)
 
     def __invert__(p):
         return Proposition(f'{Proposition(p.value)}\nis false.\n', p.context)
