@@ -34,13 +34,13 @@ class Proposition(Tag):
         self.context = Context(context)
 
     def __invert__(p):
-        return Proposition(f'{Proposition(p.value)}\nis false.\n', p.context)
+        return Proposition(f'{Proposition(p.value)}\nis false.\n', p.context.value)
 
     def __and__(p, q):
         if p.context.value == q.context.value:
             context = p.context
             p, q = Proposition(p.value), Proposition(q.value)
-            return Proposition(f'{p}\nand\n{q}\nare both true.\n', context)
+            return Proposition(f'{p}\nand\n{q}\nare both true.\n', context.value)
         else:
             return Proposition(f'{p}\nand\n{q}\nare both true.\n')
 
@@ -48,21 +48,21 @@ class Proposition(Tag):
         if p.context.value == q.context.value:
             context = p.context
             p, q = Proposition(p.value), Proposition(q.value)
-            return Proposition(f'At least one of\n{p}\nand\n{q}\nis true.\n', context)
+            return Proposition(f'At least one of\n{p}\nand\n{q}\nis true.\n', context.value)
         else:
             return Proposition(f'At least one of\n{p}\nand\n{q}\nis true.\n')
     def __eq__(p, q):
         if p.context.value == q.context.value:
             context = p.context
             p, q = Proposition(p.value), Proposition(q.value)
-            return Proposition(f'{p}\nis true, if and only if\n{q}\nis true.\n', context)
+            return Proposition(f'{p}\nis true, if and only if\n{q}\nis true.\n', context.value)
         else:
             return Proposition(f'{p}\nis true, if and only if\n{q}\nis true.\n')
     def __lshift__(p, q):
         if p.context.value == q.context.value:
             context = p.context
             p, q = Proposition(p.value), Proposition(q.value)
-            return Proposition(f'{p}\nis true, if\n{q}\nis true.\n', context)
+            return Proposition(f'{p}\nis true, if\n{q}\nis true.\n', context.value)
         else:
             return Proposition(f'{p}\nis true, if\n{q}\nis true.\n')
 
@@ -70,7 +70,7 @@ class Proposition(Tag):
         if p.context.value == q.context.value:
             context = p.context
             p, q = Proposition(p.value), Proposition(q.value)
-            return Proposition(f'{p}\nis true, only if\n{q}\nis true.\n', context)
+            return Proposition(f'{p}\nis true, only if\n{q}\nis true.\n', context.value)
         else:
             return Proposition(f'{p}\nis true, only if\n{q}\nis true.\n')
         
