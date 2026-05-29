@@ -31,7 +31,7 @@ def next_token_p(text, url="https://api.openai.com/v1/chat/completions", api_key
 
     return result
 
-def chat(text, url="https://api.openai.com/v1/chat/completions", api_key='', temperature=1.0, max_tokens=2000):
+def chat(text, url="https://api.openai.com/v1/chat/completions", model = "gpt-4o-mini", api_key='', temperature=1.0, max_tokens=2000):
     response = requests.post(
         url,
         headers={
@@ -39,7 +39,7 @@ def chat(text, url="https://api.openai.com/v1/chat/completions", api_key='', tem
             "Content-Type": "application/json"
         },
         json={
-            "model": "gpt-4o-mini",
+            "model": model,
             "messages": [{"role": "user", "content": text}],
             "temperature": temperature,
             "max_tokens": max_tokens,
