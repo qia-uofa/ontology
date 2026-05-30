@@ -5,6 +5,25 @@ from collections import defaultdict
 # ── Payload factories ────────────────────────────────────────────────────────
 
 json_data = {
+    "gpt-5-pro": lambda text, temperature=1.0, max_tokens=2000: {
+        "model": "gpt-5-pro",
+        "messages": [{"role": "user", "content": text}],
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    },
+
+    "gpt-5": lambda text, temperature=1.0, max_tokens=2000: {
+        "model": "gpt-5",
+        "messages": [{"role": "user", "content": text}],
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    },
+    "gpt-5-mini": lambda text, temperature=1.0, max_tokens=2000: {
+        "model": "gpt-5-mini",
+        "messages": [{"role": "user", "content": text}],
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    },
     # OpenAI
     "gpt-4o-mini": lambda text, temperature=1.0, max_tokens=2000: {
         "model": "gpt-4o-mini",
@@ -129,6 +148,9 @@ MISTRAL_URL   = "https://api.mistral.ai/v1/chat/completions"
 DEEPSEEK_URL  = "https://api.deepseek.com/chat/completions"
 
 MODEL_URLS = {
+    "gpt-5-pro": OPENAI_URL,
+    "gpt-5":      OPENAI_URL,
+    "gpt-5-mini": OPENAI_URL,
     "gpt-4o-mini":          OPENAI_URL,
     "gpt-4o":               OPENAI_URL,
     "gpt-4.1":              OPENAI_URL,
@@ -211,6 +233,9 @@ if __name__ == "__main__":
     }
 
     PROVIDER_KEY = {
+        "gpt-5-pro": "openai",
+        "gpt-5":      "openai",
+        "gpt-5-mini": "openai",
         "gpt-4o-mini":       "openai",
         "gpt-4o":            "openai",
         "gpt-4.1":           "openai",
