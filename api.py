@@ -2,63 +2,79 @@ import requests
 import math
 from collections import defaultdict
 
-# ── Payload factories ────────────────────────────────────────────────────────
+# ── Endpoints ────────────────────────────────────────────────────────────────
+
+OPENAI_URL           = "https://api.openai.com/v1/chat/completions"
+OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses"
+ANTHROPIC_URL        = "https://api.anthropic.com/v1/messages"
+GEMINI_URL           = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+TOGETHER_URL         = "https://api.together.xyz/v1/chat/completions"
+MISTRAL_URL          = "https://api.mistral.ai/v1/chat/completions"
+DEEPSEEK_URL         = "https://api.deepseek.com/chat/completions"
+
+# ── Model sets ────────────────────────────────────────────────────────────────
+
+ANTHROPIC_MODELS = {"claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-4-7"}
+RESPONSES_MODELS = {
+    "gpt-5", "gpt-5.4-mini", "gpt-5.4-nano",
+    "gpt-5.4", "gpt-5.4-pro", "gpt-5.5", "gpt-5.5-pro",
+}
+
+# ── Payload factories ─────────────────────────────────────────────────────────
+
+def _oai(model):
+    return lambda text, temperature=1.0, max_tokens=2000: {
+        "model": model,
+        "messages": [{"role": "user", "content": text}],
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+
+def _oai_responses(model):
+    """OpenAI /v1/responses — used by all GPT-5+ models."""
+    return lambda text, temperature=1.0, max_tokens=2000: {
+        "model": model,
+        "input": text,
+        "temperature": temperature,
+        "max_output_tokens": max_tokens,
+    }
+
+def _oai_reasoning(model):
+    """Reasoning models: no temperature, max_completion_tokens."""
+    return lambda text, max_tokens=2000, **_: {
+        "model": model,
+        "messages": [{"role": "user", "content": text}],
+        "max_completion_tokens": max_tokens,
+    }
+
+def _anthropic(model):
+    return lambda text, temperature=1.0, max_tokens=2000: {
+        "model": model,
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+        "messages": [{"role": "user", "content": text}],
+    }
+
+def _compat(model):
+    return lambda text, temperature=1.0, max_tokens=2000: {
+        "model": model,
+        "messages": [{"role": "user", "content": text}],
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
 
 json_data = {
-    "gpt-5-pro": lambda text, temperature=1.0, max_tokens=2000: {
-        "model": "gpt-5-pro",
-        "messages": [{"role": "user", "content": text}],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    },
-
-    "gpt-5": lambda text, temperature=1.0, max_tokens=2000: {
-        "model": "gpt-5",
-        "messages": [{"role": "user", "content": text}],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    },
-    "gpt-5-mini": lambda text, temperature=1.0, max_tokens=2000: {
-        "model": "gpt-5-mini",
-        "messages": [{"role": "user", "content": text}],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    },
-    # OpenAI
-    "gpt-4o-mini": lambda text, temperature=1.0, max_tokens=2000: {
-        "model": "gpt-4o-mini",
-        "messages": [{"role": "user", "content": text}],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    },
-    "gpt-4o": lambda text, temperature=1.0, max_tokens=2000: {
-        "model": "gpt-4o",
-        "messages": [{"role": "user", "content": text}],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    },
-    "gpt-4.1": lambda text, temperature=1.0, max_tokens=2000: {
-        "model": "gpt-4.1",
-        "messages": [{"role": "user", "content": text}],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    },
-    "gpt-4.1-mini": lambda text, temperature=1.0, max_tokens=2000: {
-        "model": "gpt-4.1-mini",
-        "messages": [{"role": "user", "content": text}],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    },
-    "o1": lambda text, max_tokens=2000, **_: {
-        "model": "o1",
-        "messages": [{"role": "user", "content": text}],
-        "max_completion_tokens": max_tokens,
-    },
-    "o3-mini": lambda text, max_tokens=2000, **_: {
-        "model": "o3-mini",
-        "messages": [{"role": "user", "content": text}],
-        "max_completion_tokens": max_tokens,
-    },
+    # ── OpenAI legacy chat/completions (still valid) ──
+    "gpt-4o-mini":          _oai("gpt-4o-mini"),
+    "gpt-4o":               _oai("gpt-4o"),
+    "gpt-4.1":              _oai("gpt-4.1"),
+    "gpt-4.1-mini":         _oai("gpt-4.1-mini"),
+    "gpt-4.1-nano":         _oai("gpt-4.1-nano"),
+    # ── OpenAI reasoning ──
+    "o1":                   _oai_reasoning("o1"),
+    "o3-mini":              _oai_reasoning("o3-mini"),
+    "o3":                   _oai_reasoning("o3"),
+    # ── OpenAI logprobs ──
     "gpt-4o-mini-logprobs": lambda text, **_: {
         "model": "gpt-4o-mini",
         "messages": [{"role": "user", "content": text}],
@@ -66,119 +82,73 @@ json_data = {
         "logprobs": True,
         "top_logprobs": 10,
     },
-    # Anthropic
-    "claude-3-5-haiku": lambda text, temperature=1.0, max_tokens=2000: {
-        "model": "claude-3-5-haiku-20241022",
-        "max_tokens": max_tokens,
-        "temperature": temperature,
-        "messages": [{"role": "user", "content": text}],
-    },
-    "claude-sonnet-4": lambda text, temperature=1.0, max_tokens=2000: {
-        "model": "claude-sonnet-4-20250514",
-        "max_tokens": max_tokens,
-        "temperature": temperature,
-        "messages": [{"role": "user", "content": text}],
-    },
-    "claude-opus-4": lambda text, temperature=1.0, max_tokens=2000: {
-        "model": "claude-opus-4-20250514",
-        "max_tokens": max_tokens,
-        "temperature": temperature,
-        "messages": [{"role": "user", "content": text}],
-    },
-    # Google Gemini
-    "gemini-2.0-flash": lambda text, temperature=1.0, max_tokens=2000: {
-        "model": "gemini-2.0-flash",
-        "messages": [{"role": "user", "content": text}],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    },
-    "gemini-2.5-pro": lambda text, temperature=1.0, max_tokens=2000: {
-        "model": "gemini-2.5-pro-preview-05-06",
-        "messages": [{"role": "user", "content": text}],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    },
-    # Meta via Together AI
-    "llama-3.3-70b": lambda text, temperature=1.0, max_tokens=2000: {
-        "model": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-        "messages": [{"role": "user", "content": text}],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    },
-    "llama-3.1-8b": lambda text, temperature=1.0, max_tokens=2000: {
-        "model": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
-        "messages": [{"role": "user", "content": text}],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    },
-    # Mistral
-    "mistral-large": lambda text, temperature=1.0, max_tokens=2000: {
-        "model": "mistral-large-latest",
-        "messages": [{"role": "user", "content": text}],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    },
-    "mistral-small": lambda text, temperature=1.0, max_tokens=2000: {
-        "model": "mistral-small-latest",
-        "messages": [{"role": "user", "content": text}],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    },
-    # DeepSeek
-    "deepseek-chat": lambda text, temperature=1.0, max_tokens=2000: {
-        "model": "deepseek-chat",
-        "messages": [{"role": "user", "content": text}],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-    },
-    "deepseek-reasoner": lambda text, max_tokens=2000, **_: {
-        "model": "deepseek-reasoner",
-        "messages": [{"role": "user", "content": text}],
-        "max_tokens": max_tokens,
-    },
+    # ── GPT-5 family (/v1/responses) ──
+    "gpt-5":                _oai_responses("gpt-5"),
+    "gpt-5.4":              _oai_responses("gpt-5.4"),
+    "gpt-5.4-pro":          _oai_responses("gpt-5.4-pro"),
+    "gpt-5.4-mini":         _oai_responses("gpt-5.4-mini"),
+    "gpt-5.4-nano":         _oai_responses("gpt-5.4-nano"),
+    "gpt-5.5":              _oai_responses("gpt-5.5"),
+    "gpt-5.5-pro":          _oai_responses("gpt-5.5-pro"),
+    # ── Anthropic (updated strings — old 20250514 variants retired Apr 2026) ──
+    "claude-haiku-4-5":     _anthropic("claude-haiku-4-5-20251001"),
+    "claude-sonnet-4-6":    _anthropic("claude-sonnet-4-6"),
+    "claude-opus-4-7":      _anthropic("claude-opus-4-7"),
+    # ── Gemini (2.0-flash retiring Jun 1 2026; 2.5 stable until Oct 2026) ──
+    "gemini-2.5-flash":     _compat("gemini-2.5-flash"),
+    "gemini-2.5-pro":       _compat("gemini-2.5-pro"),
+    "gemini-3-flash":       _compat("gemini-3-flash-preview"),
+    "gemini-3-pro":         _compat("gemini-3-pro-preview"),
+    # ── Meta via Together AI ──
+    "llama-3.3-70b":        _compat("meta-llama/Llama-3.3-70B-Instruct-Turbo"),
+    "llama-3.1-8b":         _compat("meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"),
+    # ── Mistral (updated strings) ──
+    "mistral-large":        _compat("mistral-large-latest"),
+    "mistral-medium":       _compat("mistral-medium-latest"),   # Medium 3.5, Apr 2026
+    "mistral-small":        _compat("mistral-small-2603"),      # Small 4, Mar 2026
+    # ── DeepSeek ──
+    "deepseek-chat":        _compat("deepseek-chat"),
+    "deepseek-reasoner":    _oai_reasoning("deepseek-reasoner"),
 }
 
-# ── Routing ──────────────────────────────────────────────────────────────────
-
-OPENAI_URL    = "https://api.openai.com/v1/chat/completions"
-ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
-GEMINI_URL    = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
-TOGETHER_URL  = "https://api.together.xyz/v1/chat/completions"
-MISTRAL_URL   = "https://api.mistral.ai/v1/chat/completions"
-DEEPSEEK_URL  = "https://api.deepseek.com/chat/completions"
-
 MODEL_URLS = {
-    "gpt-5-pro": OPENAI_URL,
-    "gpt-5":      OPENAI_URL,
-    "gpt-5-mini": OPENAI_URL,
     "gpt-4o-mini":          OPENAI_URL,
     "gpt-4o":               OPENAI_URL,
     "gpt-4.1":              OPENAI_URL,
     "gpt-4.1-mini":         OPENAI_URL,
+    "gpt-4.1-nano":         OPENAI_URL,
     "o1":                   OPENAI_URL,
     "o3-mini":              OPENAI_URL,
+    "o3":                   OPENAI_URL,
     "gpt-4o-mini-logprobs": OPENAI_URL,
-    "claude-3-5-haiku":     ANTHROPIC_URL,
-    "claude-sonnet-4":      ANTHROPIC_URL,
-    "claude-opus-4":        ANTHROPIC_URL,
-    "gemini-2.0-flash":     GEMINI_URL,
+    "gpt-5":                OPENAI_RESPONSES_URL,
+    "gpt-5.4":              OPENAI_RESPONSES_URL,
+    "gpt-5.4-pro":          OPENAI_RESPONSES_URL,
+    "gpt-5.4-mini":         OPENAI_RESPONSES_URL,
+    "gpt-5.4-nano":         OPENAI_RESPONSES_URL,
+    "gpt-5.5":              OPENAI_RESPONSES_URL,
+    "gpt-5.5-pro":          OPENAI_RESPONSES_URL,
+    "claude-haiku-4-5":     ANTHROPIC_URL,
+    "claude-sonnet-4-6":    ANTHROPIC_URL,
+    "claude-opus-4-7":      ANTHROPIC_URL,
+    "gemini-2.5-flash":     GEMINI_URL,
     "gemini-2.5-pro":       GEMINI_URL,
+    "gemini-3-flash":       GEMINI_URL,
+    "gemini-3-pro":         GEMINI_URL,
     "llama-3.3-70b":        TOGETHER_URL,
     "llama-3.1-8b":         TOGETHER_URL,
     "mistral-large":        MISTRAL_URL,
+    "mistral-medium":       MISTRAL_URL,
     "mistral-small":        MISTRAL_URL,
     "deepseek-chat":        DEEPSEEK_URL,
     "deepseek-reasoner":    DEEPSEEK_URL,
 }
 
-# Anthropic requires different headers and response parsing
-ANTHROPIC_MODELS = {"claude-3-5-haiku", "claude-sonnet-4", "claude-opus-4"}
-
-# ── Core caller ──────────────────────────────────────────────────────────────
+# ── Core caller ───────────────────────────────────────────────────────────────
 
 def call_model(model_key, api_key, **kwargs):
     if model_key not in json_data:
-        raise ValueError(f"Unknown model key: {model_key}. Available: {list(json_data)}")
+        raise ValueError(f"Unknown model key: '{model_key}'. Available: {list(json_data)}")
 
     url     = MODEL_URLS[model_key]
     payload = json_data[model_key](**kwargs)
@@ -203,12 +173,14 @@ def call_model(model_key, api_key, **kwargs):
 
     return response.json()
 
-# ── Public API ───────────────────────────────────────────────────────────────
+# ── Public API ────────────────────────────────────────────────────────────────
 
-def chat(text, model="gpt-4o-mini", api_key="", temperature=1.0, max_tokens=2000):
+def chat(text, model="gpt-5.5", api_key="", temperature=1.0, max_tokens=2000):
     data = call_model(model, api_key, text=text, temperature=temperature, max_tokens=max_tokens)
     if model in ANTHROPIC_MODELS:
         return data["content"][0]["text"]
+    if model in RESPONSES_MODELS:
+        return data["output"][0]["content"][0]["text"]
     return data["choices"][0]["message"]["content"]
 
 
@@ -220,7 +192,7 @@ def next_token_p(text, api_key=""):
         result[entry["token"]] = math.exp(entry["logprob"])
     return result
 
-# ── Demo ─────────────────────────────────────────────────────────────────────
+# ── Demo ──────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     API_KEYS = {
@@ -233,23 +205,32 @@ if __name__ == "__main__":
     }
 
     PROVIDER_KEY = {
-        "gpt-5-pro": "openai",
-        "gpt-5":      "openai",
-        "gpt-5-mini": "openai",
         "gpt-4o-mini":       "openai",
         "gpt-4o":            "openai",
         "gpt-4.1":           "openai",
         "gpt-4.1-mini":      "openai",
+        "gpt-4.1-nano":      "openai",
         "o1":                "openai",
         "o3-mini":           "openai",
-        "claude-3-5-haiku":  "anthropic",
-        "claude-sonnet-4":   "anthropic",
-        "claude-opus-4":     "anthropic",
-        "gemini-2.0-flash":  "gemini",
+        "o3":                "openai",
+        "gpt-5":             "openai",
+        "gpt-5.4":           "openai",
+        "gpt-5.4-pro":       "openai",
+        "gpt-5.4-mini":      "openai",
+        "gpt-5.4-nano":      "openai",
+        "gpt-5.5":           "openai",
+        "gpt-5.5-pro":       "openai",
+        "claude-haiku-4-5":  "anthropic",
+        "claude-sonnet-4-6": "anthropic",
+        "claude-opus-4-7":   "anthropic",
+        "gemini-2.5-flash":  "gemini",
         "gemini-2.5-pro":    "gemini",
+        "gemini-3-flash":    "gemini",
+        "gemini-3-pro":      "gemini",
         "llama-3.3-70b":     "together",
         "llama-3.1-8b":      "together",
         "mistral-large":     "mistral",
+        "mistral-medium":    "mistral",
         "mistral-small":     "mistral",
         "deepseek-chat":     "deepseek",
         "deepseek-reasoner": "deepseek",
@@ -261,6 +242,6 @@ if __name__ == "__main__":
         key = API_KEYS[provider]
         try:
             reply = chat(prompt, model=model_key, api_key=key)
-            print(f"[{model_key:30s}] {reply.strip()}")
+            print(f"[{model_key:25s}] {reply.strip()}")
         except Exception as e:
-            print(f"[{model_key:30s}] ERROR: {e}")
+            print(f"[{model_key:25s}] ERROR: {e}")
