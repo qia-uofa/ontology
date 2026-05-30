@@ -175,14 +175,32 @@ def call_model(model_key, api_key, **kwargs):
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
+def _parse_responses_output(data):
+    """
+    Extract text from a /v1/responses payload.
+    output is a list of items; each has a 'type'.
+    Text lives in items of type 'message' -> content[0]['text'].
+    Reasoning models also emit a 'reasoning' item — skip it.
+    """
+    for item in data.get("output", []):
+        if item.get("type") == "message":
+            content = item.get("content", [])
+            for block in content:
+                if block.get("type") == "output_text":
+                    return block["text"]
+            # fallback: first block regardless of type
+            if content:
+                return content[0].get("text", "")
+    raise ValueError(f"No message output found in response: {data}")
+
+
 def chat(text, model="gpt-5.5", api_key="", temperature=1.0, max_tokens=2000):
     data = call_model(model, api_key, text=text, temperature=temperature, max_tokens=max_tokens)
     if model in ANTHROPIC_MODELS:
         return data["content"][0]["text"]
     if model in RESPONSES_MODELS:
-        return data["output"][0]["content"][0]["text"]
+        return _parse_responses_output(data)
     return data["choices"][0]["message"]["content"]
-
 
 def next_token_p(text, api_key=""):
     data    = call_model("gpt-4o-mini-logprobs", api_key, text=text)
