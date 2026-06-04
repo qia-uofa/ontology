@@ -1,3 +1,5 @@
+from api import next_token_p, chat, MODEL_URLS
+
 class DistributionInference:
     def prompter(self, proposition):
         return f'''Determine the True/False value of the next occurring proposition:
