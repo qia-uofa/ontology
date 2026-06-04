@@ -1,4 +1,5 @@
 from api import next_token_p, chat, MODEL_URLS
+import os
 
 class DistributionInference:
     def prompter(self, proposition):
