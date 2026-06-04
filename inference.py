@@ -74,7 +74,7 @@ class MonteCarloInference:
                 f.write('\n\n'.join(log_strings))
                 f.write('\n\n')
 
-    def _promtper(self, proposition):
+    def _prompter(self, proposition):
         return f'''Determine the True/False value of the next occurring proposition:
 
 1. Think through the problem step by step, considering relevant evidence and perspectives.
