@@ -128,7 +128,7 @@ The given proposition:
                 self.log(f'```\n{result}\n```')
                 results.append(result)      
                 i += 1
-            except Exception as e:
+            except Exception as e: 
                 self.log(f'```\n{e}\n```')
                 time.sleep(1)
             time.sleep(self.wait_time)
