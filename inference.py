@@ -1,3 +1,5 @@
+from time import time
+
 from api import next_token_p, chat, MODEL_URLS
 import os
 
@@ -52,13 +54,14 @@ import re
 class MonteCarloInference:
     def __init__(
             self, 
-            sample_size = 10, 
+            prompter=None,
+            classifier=None,
+            sample_size = 100, 
             enable_log=True, 
             log_path='./log.md', 
             model='gpt-5.5-pro', 
-            api_key_var='OPENAI_API', 
-            prompter=None,
-            classifier=None
+            api_key_var='OPENAI_API',
+            wait_time=0
         ):
         self.model = model
         self.api_key_var = api_key_var
@@ -68,6 +71,7 @@ class MonteCarloInference:
         self.counter = 0
         self.classifier = classifier if classifier else lambda samples: self._classifier(samples)
         self.prompter = prompter if prompter else lambda proposition: self._prompter(proposition)
+        self.wait_time = wait_time
 
     def log(self, *log_strings):
         if self.enable_log:
@@ -112,20 +116,22 @@ The given proposition:
     def generator(self, prompt):
         results = []
         self.log('## Samples')
-        for i in range(self.sample_size):
+        i = 0
+        while i < self.sample_size:
             self.log(f'### Sample {i+1}')
-
             try:
                 result = chat(
                     prompt,
                     model=self.model,
                     api_key=os.getenv(self.api_key_var)
                 )
+                self.log(f'```\n{result}\n```')
+                results.append(result)      
+                i += 1
             except Exception as e:
-                result = f'```\n{e}\n```'
-
-            self.log(f'```\n{result}\n```')
-            results.append(result)
+                self.log(f'```\n{e}\n```')
+                time.sleep(1)
+            time.sleep(self.wait_time)
         return results
 
     def ontology(self, proposition, condition=None):
