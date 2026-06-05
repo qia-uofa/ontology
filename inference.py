@@ -1,7 +1,8 @@
-from time import time
+import os
+import time
 
 from api import next_token_p, chat, MODEL_URLS
-import os
+
 
 class DistributionInference:
     def prompter(self, proposition):
