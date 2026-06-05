@@ -114,11 +114,16 @@ The given proposition:
         self.log('## Samples')
         for i in range(self.sample_size):
             self.log(f'### Sample {i+1}')
-            result = chat(
-                prompt,
-                model=self.model,
-                api_key=os.getenv(self.api_key_var)
-            )
+
+            try:
+                result = chat(
+                    prompt,
+                    model=self.model,
+                    api_key=os.getenv(self.api_key_var)
+                )
+            except Exception as e:
+                result = f'```\n{e}\n```'
+
             self.log(f'```\n{result}\n```')
             results.append(result)
         return results
