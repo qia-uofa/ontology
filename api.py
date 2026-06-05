@@ -214,44 +214,13 @@ def next_token_p(text, api_key=""):
 
 if __name__ == "__main__":
     API_KEYS = {
-        "openai":    "your-openai-key",
-        "anthropic": "your-anthropic-key",
-        "gemini":    "your-gemini-key",
-        "together":  "your-together-key",
-        "mistral":   "your-mistral-key",
-        "deepseek":  "your-deepseek-key",
+        "mistral":   "jE15SjhCZ6GoMKqbQnDofr0t1U8wHyJu"
     }
 
     PROVIDER_KEY = {
-        "gpt-4o-mini":       "openai",
-        "gpt-4o":            "openai",
-        "gpt-4.1":           "openai",
-        "gpt-4.1-mini":      "openai",
-        "gpt-4.1-nano":      "openai",
-        "o1":                "openai",
-        "o3-mini":           "openai",
-        "o3":                "openai",
-        "gpt-5":             "openai",
-        "gpt-5.4":           "openai",
-        "gpt-5.4-pro":       "openai",
-        "gpt-5.4-mini":      "openai",
-        "gpt-5.4-nano":      "openai",
-        "gpt-5.5":           "openai",
-        "gpt-5.5-pro":       "openai",
-        "claude-haiku-4-5":  "anthropic",
-        "claude-sonnet-4-6": "anthropic",
-        "claude-opus-4-7":   "anthropic",
-        "gemini-2.5-flash":  "gemini",
-        "gemini-2.5-pro":    "gemini",
-        "gemini-3-flash":    "gemini",
-        "gemini-3-pro":      "gemini",
-        "llama-3.3-70b":     "together",
-        "llama-3.1-8b":      "together",
         "mistral-large":     "mistral",
         "mistral-medium":    "mistral",
         "mistral-small":     "mistral",
-        "deepseek-chat":     "deepseek",
-        "deepseek-reasoner": "deepseek",
     }
 
     prompt = "Name one planet in one word."

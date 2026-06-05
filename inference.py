@@ -119,19 +119,25 @@ The given proposition:
         self.log('## Samples')
         i = 0
         while i < self.sample_size:
-            self.log(f'### Sample {i+1}')
+            success = False
+            
             try:
                 result = chat(
                     prompt,
                     model=self.model,
                     api_key=os.getenv(self.api_key_var)
                 )
-                self.log(f'```\n{result}\n```')
-                results.append(result)      
+                results.append(result)
+                success = True
                 i += 1
+                
             except Exception as e: 
-                self.log(f'```\n{e}\n```')
                 time.sleep(1)
+                
+            if success:
+                self.log(f'### Sample {i}')
+                self.log(f'```\n{result}\n```')
+
             time.sleep(self.wait_time)
         return results
 
