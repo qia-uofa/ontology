@@ -1,5 +1,6 @@
 import os
 import time
+from datetime import datetime
 
 from api import next_token_p, chat, MODEL_URLS
 
@@ -144,6 +145,13 @@ The given proposition:
     def ontology(self, proposition, condition=None):
         if condition is None:
             self.log('# Ontology')
+            self.log('\n'.join([
+                '| Field | Value |',
+                '| --- | --- |',
+                f'| Model | {self.model} |',
+                f'| Sample Size | {self.sample_size} |',
+                f'| Current Time | {datetime.now().strftime("%Y-%m-%d %H:%M:%S")} |',
+            ]))
             self.log(
                 '## Proposition',
                 f'```\n{proposition}\n```'
